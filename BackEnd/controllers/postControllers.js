@@ -81,13 +81,13 @@ module.exports.userAllPost = async (req, res) => {
 module.exports.allPost = async (req, res) => {
     try {
         const post = await Post.find().sort({ createdAt: -1 })
-            .populate({ path: 'author', select: 'username ,profilePicture' })
+            .populate({ path: 'author', select: 'username profilePicture' })
             .populate({
                 path: 'comments',
                 sort: { createAt: -1 },
                 populate: {
                     path: 'author',
-                    select: 'username , profilePicture'
+                    select: 'username profilePicture'
                 }
 
             })

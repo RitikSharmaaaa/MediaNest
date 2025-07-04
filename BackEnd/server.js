@@ -17,12 +17,12 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true })); // Fixed: express.urlencoded, not just urlencoded
 
-const corsOption = {
-    origin : 'https/localhost:5173',
-    credentials:true
-}
+app.use(cors({
+  origin: 'http://localhost:5173',
+  credentials: true
+}));
 
-app.use(cors(corsOption));
+
 app.use('/user',userRoute);
 app.use('/post',postRoute);
 app.use('/message',messageRoute);
