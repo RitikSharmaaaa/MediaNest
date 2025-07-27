@@ -95,15 +95,15 @@ const CreatePost = ({ open, setOpen }) => {
           <div className="flex items-center gap-3">
             <Avatar className="w-8 h-8 rounded-full overflow-hidden">
               <AvatarImage
-                src={user.profilePicture}
+                src={user?.profilePicture}
                 alt="User"
                 className="w-full h-full object-fit"
               />
               <AvatarFallback>CN</AvatarFallback>
             </Avatar>
             <div>
-              <p className="font-medium text-gray-900">{user.username}</p>
-              <span className="text-sm text-gray-500">{user.bio}</span>
+              <p className="font-medium text-gray-900">{user?.username}</p>
+              <span className="text-sm text-gray-500">{user?.bio}</span>
             </div>
           </div>
 

@@ -12,7 +12,6 @@ const useGetAllPost = () => {
         const res = await axios.post("http://localhost:9000/post/allpost", {}, {
           withCredentials: true,
         });
-       
         if (res.data.success) {
           dispatch(setPostUser(res.data.post));
         }

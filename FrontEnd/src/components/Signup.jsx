@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
+import React, { use, useState } from 'react';
 import { User, Mail, Lock, LogIn } from 'lucide-react';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { useDispatch } from 'react-redux';
+import { setAuthUser } from '@/redux/authSlice';
+
 
 export default function SignupPage() {
   const [formData, setFormData] = useState({
@@ -11,9 +14,13 @@ export default function SignupPage() {
     password: ''
   });
 
+
+
   const [isLoding,setIsLoding] = useState(false);
 
   const navigate  = useNavigate();
+  const dispatch = useDispatch();
+  
 
   const handleChange = (e) => {
     setFormData({
@@ -26,10 +33,17 @@ const handleSubmit = async (e) => {
 
   try {
           setIsLoding(true);
-    const response = await axios.post('http://localhost:9000/user/register', formData);
+    const response = await axios.post('http://localhost:9000/user/register', formData,{
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      withCredentials: true
+    });
     console.log(response);
     if(response.data.success){
        toast(response.data.message);
+        // Redirect to login page or home page after successful signup
+        dispatch(setAuthUser(response.data.user));
         navigate('/');
        
     }

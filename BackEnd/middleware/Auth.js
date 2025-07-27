@@ -1,27 +1,27 @@
 const jwt = require('jsonwebtoken');
 
-module.exports.isAuthencaicated = (req,res,next)=>{
-    try{
-        const token = req.cookies.token;
-        if(!token){
-        res.status(401).json({
-            message:'user not auhorize',
-            success:false
-        })
-        }
-
-        const decode = jwt.verify(token,process.env.SECRETKEY);
-        if(!decode){
-            res.status(401).json({
-                    message:'Invalid',
-                    success:false
-                })
-        }
-        req.id  =  decode.userId;
-        next()
-
-
-    }catch(err){
-        console.log(err);
+module.exports.isAuthenticated = (req, res, next) => {
+  try {
+    const token = req.cookies.token;
+    if (!token) {
+      return res.status(401).json({
+        message: 'User not authorized: No token provided',
+        success: false
+      });
     }
-}
+
+    const decoded = jwt.verify(token, process.env.SECRETKEY);
+
+    // No need to check decoded, jwt.verify throws if invalid
+
+    req.id = decoded.userId;
+    next();
+
+  } catch (err) {
+    console.error('Auth error:', err.message);
+    return res.status(401).json({
+      message: 'Invalid or expired token',
+      success: false
+    });
+  }
+};

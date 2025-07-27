@@ -6,6 +6,7 @@ import MainLayout from './components/MainLayout'
 import Profile from './components/Profile'
 import { LogIn } from 'lucide-react'
 import Login from './components/Login'
+import EditProfile from './components/EditProfile'
 // import { Route } from 'lucide-react'
 
 const browserRouter = createBrowserRouter([
@@ -18,8 +19,12 @@ const browserRouter = createBrowserRouter([
         element:<Home/>
       },
       {
-        path:'/profile',
+        path:'/profile/:id',
         element:<Profile/>
+      },
+      {
+        path:'account/edit',
+        element:<EditProfile/>
       }
     ]
   },

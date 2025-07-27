@@ -38,6 +38,7 @@ module.exports.register = async (req, res) => {
         const user = await User.create(userData);
 
         return res.status(200).json({
+            user,
             message: "Account Created Sucesssfully",
             success: true
         })
@@ -56,54 +57,55 @@ module.exports.register = async (req, res) => {
 module.exports.login = async (req, res) => {
     try {
         const { email, password } = req.body;
+
         if (!email || !password) {
-            return res.status(500).json({
-                message: "All field required",
+            return res.status(400).json({
+                message: "All fields are required",
                 success: false
-            })
+            });
         }
+
         const user = await User.findOne({ email });
         if (!user) {
-            return res.status(500).json({
-                message: "Email Or Password is Wrong",
+            return res.status(400).json({
+                message: "Email or password is incorrect",
                 success: false
-            })
+            });
         }
+
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
-            return res.status(500).json({
-                message: "Email Or Password is Wrong",
+            return res.status(400).json({
+                message: "Email or password is incorrect",
                 success: false
-            })
+            });
         }
 
         const token = jwt.sign({ userId: user._id }, process.env.SECRETKEY, { expiresIn: '1d' });
 
+        const userData = await User.findById(user._id).select('-password');
         return res
             .cookie('token', token, {
                 httpOnly: true,
                 sameSite: 'strict',
-                maxAge: 24 * 60 * 60 * 1000, // 1 day
-                secure: false // Set to true in production (HTTPS)
+                secure: false, // true in production
+                maxAge: 24 * 60 * 60 * 1000 // 1 day
             })
             .status(200)
             .json({
                 message: "Welcome",
                 success: true,
-                user
-
+                user: userData
             });
 
     } catch (error) {
-        console.log(error);
+        console.error(error);
         return res.status(500).json({
-            message: error,
-            success: false,
-            
-        })
+            message: "Something went wrong",
+            success: false
+        });
     }
-
-}
+};
 
 module.exports.logout = (_, res) => {
     try {
@@ -121,7 +123,7 @@ module.exports.getProfile = async (req, res) => {
 
     try {
         const userId = req.params.id;
-        const user = await User.findOne({ _id: userId }).select('-password');
+        const user = await User.findOne({ _id: userId }).populate({path:'posts',createdAt: -1}).populate('bookmarks').select('-password');
 
         res.status(200).json({
             user,
@@ -149,6 +151,7 @@ module.exports.editProfile = async (req, res) => {
 
         await user.save();
         return res.status(200).json({
+            user,
             message: "Data Updated",
             success: true
         })
@@ -164,20 +167,28 @@ module.exports.editProfile = async (req, res) => {
 module.exports.getSuggestedUser = async (req, res) => {
     try {
         const suggestedUsers = await User.find({ _id: { $ne: req.id } }).select("-password");
-        if (!suggestedUsers) {
-            return res.status(400).json({
-                message: 'Currently do not have any users',
+        
+        if (!suggestedUsers || suggestedUsers.length === 0) {
+            return res.status(404).json({
+                message: 'No suggested users found',
                 success: false
-            })
-        };
-        return res.status(400).json({
+            });
+        }
+
+        return res.status(200).json({
             success: true,
             user: suggestedUsers
-        })
+        });
+
     } catch (error) {
-        console.log(error)
+        console.log(error);
+        return res.status(500).json({
+            success: false,
+            message: "Server error while fetching suggested users"
+        });
     }
-}
+};
+
 
 module.exports.followUnfollow = async (req, res) => {
     try {

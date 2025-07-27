@@ -2,7 +2,7 @@ const sharp = require('sharp');
 const cloudinary = require('../utils/cloudinary');
 const Post = require('../models/post_model');
 const User = require('../models/user_model');
-const Comment = require('../models/comment')
+const Comment = require('../models/comment');
 
 module.exports.addPost = async (req, res) => {
     try {
@@ -10,12 +10,11 @@ module.exports.addPost = async (req, res) => {
         const { caption } = req.body;
         const image = req.file;
 
-     
         if (!image) {
             return res.status(400).json({
                 message: "Image required",
                 success: false
-            })
+            });
         }
 
         const optimizedImageBuffer = await sharp(image.buffer)
@@ -30,53 +29,58 @@ module.exports.addPost = async (req, res) => {
             caption,
             image: cloudnaryResponse.secure_url,
             author
-        })
+        });
+
         const user = await User.findOne({ _id: author });
 
         if (user) {
             user.posts.push(post._id);
             await user.save();
         }
+
         await post.populate({ path: 'author', select: '-password' });
 
         return res.status(200).json({
             message: "Image Uploaded sucessfully",
             post,
             success: true
-        })
+        });
 
-
-
-    }
-    catch (err) {
+    } catch (err) {
         console.log(err);
+        return res.status(500).json({
+            message: "Server error",
+            success: false
+        });
     }
-
-}
+};
 
 module.exports.userAllPost = async (req, res) => {
     try {
         const post = await Post.find({ author: req.id }).sort({ createdAt: -1 })
-            .populate({ path: 'author', select: 'username ,profilePicture' })
+            .populate({ path: 'author', select: 'username profilePicture' })
             .populate({
                 path: 'comments',
-                sort: { createAt: -1 },
+                sort: { createdAt: -1 },   // fixed typo here
                 populate: {
                     path: 'author',
-                    select: 'username , profilePicture'
+                    select: 'username profilePicture'
                 }
+            });
 
-            })
         return res.status(200).json({
             message: "All post are showed",
             post,
             success: true
-        })
+        });
     } catch (error) {
         console.log(error);
+        return res.status(500).json({
+            message: "Server error",
+            success: false
+        });
     }
-}
-
+};
 
 module.exports.allPost = async (req, res) => {
     try {
@@ -84,22 +88,26 @@ module.exports.allPost = async (req, res) => {
             .populate({ path: 'author', select: 'username profilePicture' })
             .populate({
                 path: 'comments',
-                sort: { createAt: -1 },
+                sort: { createdAt: -1 },  // fixed typo here
                 populate: {
                     path: 'author',
                     select: 'username profilePicture'
                 }
+            });
 
-            })
         return res.status(200).json({
             message: "All post are showed",
             post,
             success: true
-        })
+        });
     } catch (error) {
         console.log(error);
+        return res.status(500).json({
+            message: "Server error",
+            success: false
+        });
     }
-}
+};
 
 module.exports.likePost = async (req, res) => {
     try {
@@ -112,30 +120,36 @@ module.exports.likePost = async (req, res) => {
             return res.status(500).json({
                 message: "Post Not found",
                 success: false
-            })
+            });
         }
+
         const isLiked = post.likes.includes(likeKrneWala);
         if (isLiked) {
             await post.likes.pull(likeKrneWala);
             await post.save();
             return res.status(200).json({
                 message: "Unliked",
-                success: true
-            })
-        }
-        else {
+                success: true,
+                updatedLikes: post.likes
+            });
+        } else {
             await post.likes.push(likeKrneWala);
             await post.save();
             return res.status(200).json({
                 message: "liked",
-                success: true
-            })
+                success: true,
+                updatedLikes: post.likes
+            });
         }
 
     } catch (error) {
         console.log(error);
+        return res.status(500).json({
+            message: "Server error",
+            success: false
+        });
     }
-}
+};
 
 module.exports.addComment = async (req, res) => {
     try {
@@ -147,7 +161,7 @@ module.exports.addComment = async (req, res) => {
             return res.status(500).json({
                 message: "postid is invalid",
                 success: false
-            })
+            });
         }
 
         const post = await Post.findById({ _id: postId });
@@ -156,26 +170,33 @@ module.exports.addComment = async (req, res) => {
             return res.status(500).json({
                 message: "post not found",
                 success: false
-            })
+            });
         }
 
         const comment = await Comment.create({
             text,
             author: userId,
             post: postId
-        })
+        });
+
         await post.comments.push(comment._id);
         await post.save();
+
         return res.status(200).json({
             message: "Comment Added",
+            comment,
             post,
             success: true
-        })
+        });
 
     } catch (error) {
         console.log(error);
+        return res.status(500).json({
+            message: "Server error",
+            success: false
+        });
     }
-}
+};
 
 module.exports.getAllComment = async (req, res) => {
     try {
@@ -184,26 +205,31 @@ module.exports.getAllComment = async (req, res) => {
             return res.status(500).json({
                 message: "Postid Not found",
                 success: false
-            })
+            });
         }
 
         const comment = await Comment.find({ post: postId }).sort({ createdAt: -1 })
             .populate({
                 path: 'author',
-                select: 'username, profilePricture'
+                select: 'username profilePicture'   // fixed typo here (profilePricture → profilePicture)
             })
             .populate({
                 path: 'post'
-            })
+            });
+
         return res.status(200).json({
             message: "get all comment",
             comment,
             success: true
-        })
+        });
     } catch (error) {
-
+        console.log(error);
+        return res.status(500).json({
+            message: "Server error",
+            success: false
+        });
     }
-}
+};
 
 module.exports.deletePost = async (req, res) => {
     try {
@@ -257,44 +283,44 @@ module.exports.deletePost = async (req, res) => {
             success: false
         });
     }
-}
+};
 
-module.exports.bookmark = async(req,res)=>{
- try {
-       const postId = req.params.id;
-    const userId = req.id;
-    console.log(postId);
-    
-    
+module.exports.bookmark = async (req, res) => {
+    try {
+        const postId = req.params.id;
+        const userId = req.id;
+
         if (!postId) {
             return res.status(500).json({
                 message: "Post ID not provided",
                 success: false
             });
-        }  
-   
+        }
 
-    const user =  await User.findOne({_id:userId});
-    
-    const isBookmarked = user.bookmarks.includes(postId);
-    if(isBookmarked){
-        await user.bookmarks.pull(postId);
-        await user.save();
-        return res.status(200).json({
+        const user = await User.findOne({ _id: userId });
+
+        const isBookmarked = user.bookmarks.includes(postId);
+        if (isBookmarked) {
+            await user.bookmarks.pull(postId);
+            await user.save();
+            return res.status(200).json({
                 message: "Unbookmarked",
                 success: true
-        });
-    }    
-    else{
-        await user.bookmarks.push(postId);
-        await user.save();
-        return res.status(200).json({
+            });
+        } else {
+            await user.bookmarks.push(postId);
+            await user.save();
+            return res.status(200).json({
                 message: "bookmarked",
                 success: true
-        });       
-    }
+            });
+        }
 
- } catch (error) {
-    console.log(error);
- }
-}
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            message: "Server error",
+            success: false
+        });
+    }
+};

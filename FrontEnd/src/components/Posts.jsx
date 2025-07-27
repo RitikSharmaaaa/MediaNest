@@ -4,12 +4,15 @@ import { useSelector } from 'react-redux';
 
 const Posts = () => {
   const post = useSelector((store) => store.post?.post || []);
+  
 
   return (
     <div>
-      {post.map((posts) => (
-        <Post key={posts._id} post={posts} />
-      ))}
+      {post
+        .filter((p) => p && p._id) // 💡 filter out null/undefined/invalid posts
+        .map((posts) => (
+          <Post key={posts._id} post={posts} />
+        ))}
     </div>
   );
 };
